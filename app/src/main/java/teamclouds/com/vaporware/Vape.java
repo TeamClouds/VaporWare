@@ -20,6 +20,7 @@ public class Vape extends Application {
 
     private static UsbManager mUsbManager;
     private static UsbDevice mUsbDevice;
+    private static Handler mHandler;
 
     @Override
     public void onCreate() {
@@ -32,6 +33,14 @@ public class Vape extends Application {
             mUsbManager = (UsbManager) c.getSystemService(USB_SERVICE);
         }
         return mUsbManager;
+    }
+
+    static void setHandler(Handler handler) {
+        mHandler = handler;
+    }
+
+    static Handler getHandler() {
+        return mHandler;
     }
 
     static void setDevice(UsbDevice device) {

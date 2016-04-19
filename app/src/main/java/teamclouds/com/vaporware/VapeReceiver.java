@@ -24,20 +24,13 @@ public class VapeReceiver extends BroadcastReceiver implements UsbSerialInterfac
 
     Context mContext;
 
-    Handler mHandler = new Handler(Looper.getMainLooper()) {
-        @Override
-        public void handleMessage(Message message) {
-            Toast.makeText(mContext, (String)message.obj, Toast.LENGTH_LONG).show();
-        }
-    };
-
     @Override
     public void onReceivedData(byte[] bytes) {
         String data = null;
         try {
             data = new String(bytes, "UTF-8");
             data.concat("/n");
-            Message message = mHandler.obtainMessage();
+            Message message = Vape.getHandler().obtainMessage();
             message.obj = data;
             message.sendToTarget();
         } catch (UnsupportedEncodingException e) {
