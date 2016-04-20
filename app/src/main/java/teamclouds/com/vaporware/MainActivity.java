@@ -1,5 +1,9 @@
 package teamclouds.com.vaporware;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,6 +20,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,30 +30,36 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         VapeData.VapeUpdated {
 
-    TextView selected;
+    TextView selected, actual, resistance, watts;
 
-    Handler mHandler = new Handler(Looper.getMainLooper()) {
+    private BroadcastReceiver mVapeDataReceiver = new BroadcastReceiver() {
         @Override
-        public void handleMessage(Message message) {
-            String obj = (String) message.obj;
-            VapeData data = VapeData.parseString(getApplicationContext(),
-                    obj);
-
+        public void onReceive(Context context, Intent intent) {
+            Bundle b = intent.getExtras();
+            VapeData data = (VapeData) b.get(VapeData.VAPE_DATA);
             onVapeUpdated(data);
         }
     };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Vape.setHandler(mHandler);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(VapeData.ACTION_DATA_RECEIVED);
+        registerReceiver(mVapeDataReceiver, filter);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         CoordinatorLayout layout = (CoordinatorLayout) findViewById(R.id.app_bar);
-        RelativeLayout datalayout = (RelativeLayout) layout.findViewById(R.id.content);
+        LinearLayout datalayout = (LinearLayout) layout.findViewById(R.id.content);
         selected = (TextView) datalayout.findViewById(R.id.selected);
+        actual = (TextView) datalayout.findViewById(R.id.actual);
+        resistance = (TextView) datalayout.findViewById(R.id.resitance);
+        watts = (TextView) datalayout.findViewById(R.id.watts);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -132,7 +143,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onVapeUpdated(VapeData vape) {
         if (selected != null && vape != null) {
-            selected.setText("" + vape.mSelectedTemp);
+            selected.setText(String.valueOf(vape.mSelectedTemp));
+            actual.setText(String.valueOf(vape.mActualTemp));
+            watts.setText(String.valueOf(vape.mWatts));
+            resistance.setText(String.valueOf(vape.mResistance));
+
         }
     }
 }

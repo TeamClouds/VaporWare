@@ -25,8 +25,12 @@
                   android:enabled="true">
             <intent-filter>
                 <action android:name="com.teamcloud.vapeware.USB_PERMISSION" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+                <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED" />
             </intent-filter>
         </receiver>
+
+        <service android:name=".VapeService" />
 
     </application>
 

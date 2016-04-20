@@ -13,6 +13,8 @@ import java.util.HashMap;
  */
 public class helper {
 
+
+
     public static void findVapeDevice(Context context) {
         HashMap<String, UsbDevice> usbDevices = Vape.getManager(context).getDeviceList();
         if (!usbDevices.isEmpty()) {
