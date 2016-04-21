@@ -28,7 +28,7 @@ public class Vape extends Application {
         getManager(this);
     }
 
-    static UsbManager getManager(Context c) {
+    public static UsbManager getManager(Context c) {
         if (mUsbManager == null) {
             mUsbManager = (UsbManager) c.getSystemService(USB_SERVICE);
         }
@@ -43,7 +43,7 @@ public class Vape extends Application {
         return mHandler;
     }
 
-    static void setDevice(UsbDevice device) {
+    public static void setDevice(UsbDevice device) {
         mUsbDevice = device;
     }
 

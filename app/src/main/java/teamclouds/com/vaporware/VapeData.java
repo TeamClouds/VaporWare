@@ -4,6 +4,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+import static teamclouds.com.vaporware.VapeParsing.PID;
+
 /**
  * Created by bird on 4/19/16.
  */
@@ -24,7 +26,7 @@ public class VapeData implements Parcelable {
     private final static int WATTS_POST = 3;
     private final static int RESISTANCE_POS = 4;
 
-    public VapeData(String type, int selectedTemp, int actualTemp, int watts, int resistance) {
+    private VapeData(String type, int selectedTemp, int actualTemp, int watts, int resistance) {
         this.mType = type;
         this.mActualTemp = actualTemp;
         this.mSelectedTemp = selectedTemp;
@@ -32,7 +34,7 @@ public class VapeData implements Parcelable {
         this.mWatts = watts;
     }
 
-    protected VapeData(Parcel in) {
+    private VapeData(Parcel in) {
         mType = in.readString();
         mSelectedTemp = in.readInt();
         mActualTemp = in.readInt();
@@ -66,13 +68,10 @@ public class VapeData implements Parcelable {
         parcel.writeLong(mResistance);
     }
 
-    interface VapeUpdated {
-        public void onVapeUpdated(VapeData vape);
-    }
-
     public static VapeData parseString(String data){
         String[] info = data.split(",");
-        if (info.length <= 5) {
+        Log.v("BIRD", "Got data:" + data);
+        if (data.startsWith(PID)) {
             int selectedTemp = Integer.parseInt(info[SELECTEDTEMP_POS]);
             int actualTemp = Integer.parseInt(info[ACTUALTEMP_POS]);
             int watts = Integer.parseInt(info[WATTS_POST]);
