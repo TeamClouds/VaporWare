@@ -39,11 +39,11 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -139,8 +139,7 @@ public class MainActivity extends AppCompatActivity
             switch (msg.what) {
                 case UsbService.MESSAGE_FROM_SERIAL_PORT:
                     String data = (String) msg.obj;
-                    VapeData vapeData = VapeData.parseString(data);
-                    mActivity.get().onVapeUpdated(vapeData, data);
+                    mActivity.get().onVapeUpdated(data);
                     break;
                 case UsbService.CTS_CHANGE:
                     Toast.makeText(mActivity.get(), "CTS_CHANGE",Toast.LENGTH_LONG).show();
@@ -162,6 +161,8 @@ public class MainActivity extends AppCompatActivity
         return data;
     }
 
+    NumberPicker pidP;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -180,6 +181,18 @@ public class MainActivity extends AppCompatActivity
         resistance = (TextView) datalayout.findViewById(R.id.resitance);
         watts = (TextView) datalayout.findViewById(R.id.watts);
         commands = (EditText) datalayout.findViewById(R.id.commandLine);
+        pidP = (NumberPicker) findViewById(R.id.pidP);
+
+        pidP.setMinValue(0);
+        pidP.setMaxValue(300);
+        pidP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+            @Override
+            public void onValueChange(NumberPicker numberPicker, int i, int i1) {
+                SendData.setP(usbService, i);
+
+            }
+        });
+
         Button pidbutton = (Button) datalayout.findViewById(R.id.enablePidDump);
         pidbutton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -192,9 +205,11 @@ public class MainActivity extends AppCompatActivity
         hidbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                byte[] buffer = { (byte)0xB4 , 0 , 0 };
+                /*byte[] buffer = { (byte)0xB4 , 0 , 0 };
                 int write = usbService.writeHID(buffer);
-                Toast.makeText(getApplicationContext(), "?:" +write, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "?:" +write, Toast.LENGTH_SHORT).show(); */
+                SendData.getSettings(usbService);
+
             }
         });
 
@@ -345,7 +360,9 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void onVapeUpdated(VapeData vape, String raw) {
+
+    public void onVapeUpdated(String raw) {
+        VapeData vape = VapeData.parseString(raw);
         if (selected != null && vape != null) {
             selected.setText(String.valueOf(vape.mSelectedTemp));
             actual.setText(String.valueOf(vape.mActualTemp));
@@ -355,6 +372,10 @@ public class MainActivity extends AppCompatActivity
             data.put(time, vape);
             addEntry(time, vape.mActualTemp, vape.mSelectedTemp);
         } else {
+            SettingsObject.parseString(settings, raw);
+            if (settings != null) {
+                pidP.setValue(settings.pidP);
+            }
             Toast.makeText(this, "DATA:" + raw,Toast.LENGTH_SHORT).show();
         }
     }

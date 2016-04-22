@@ -66,7 +66,18 @@
                 android:id="@+id/writeHid"
                 android:text="writeHid"/>
 
+        <NumberPicker android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:id="@+id/pidP"/>
+
+        <NumberPicker android:layout_width="wrap_content"
+                      android:layout_height="wrap_content" />
+
+        <NumberPicker android:layout_width="wrap_content"
+                      android:layout_height="wrap_content" />
     </LinearLayout>
+
+
 
 
 </LinearLayout>

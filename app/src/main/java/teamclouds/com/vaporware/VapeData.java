@@ -19,6 +19,9 @@ public class VapeData implements Parcelable {
     int mActualTemp;
     int mWatts;
     long mResistance;
+    int mP;
+    int mI;
+    int mD;
 
     private final static int TYPE_POS = 0;
     private final static int SELECTEDTEMP_POS = 1;
@@ -32,6 +35,12 @@ public class VapeData implements Parcelable {
         this.mSelectedTemp = selectedTemp;
         this.mResistance = resistance;
         this.mWatts = watts;
+    }
+
+    private VapeData(int P, int I, int D) {
+        this.mP = P;
+        this.mI = I;
+        this.mD = D;
     }
 
     private VapeData(Parcel in) {
