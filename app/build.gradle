@@ -26,5 +26,4 @@ dependencies {
     compile 'com.android.support:design:23.2.1'
     compile 'com.github.felHR85:UsbSerial:4.2'
     compile 'com.github.PhilJay:MPAndroidChart:v2.2.4'
-
 }

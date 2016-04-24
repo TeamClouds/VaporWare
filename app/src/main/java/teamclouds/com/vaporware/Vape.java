@@ -18,36 +18,9 @@ import java.util.HashMap;
  */
 public class Vape extends Application {
 
-    private static UsbManager mUsbManager;
-    private static UsbDevice mUsbDevice;
-    private static Handler mHandler;
-
     @Override
     public void onCreate() {
         super.onCreate();
-        getManager(this);
     }
 
-    public static UsbManager getManager(Context c) {
-        if (mUsbManager == null) {
-            mUsbManager = (UsbManager) c.getSystemService(USB_SERVICE);
-        }
-        return mUsbManager;
-    }
-
-    static void setHandler(Handler handler) {
-        mHandler = handler;
-    }
-
-    static Handler getHandler() {
-        return mHandler;
-    }
-
-    public static void setDevice(UsbDevice device) {
-        mUsbDevice = device;
-    }
-
-    public static UsbDevice getDevice() {
-        return mUsbDevice;
-    }
 }

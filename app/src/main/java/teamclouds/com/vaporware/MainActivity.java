@@ -1,46 +1,26 @@
 package teamclouds.com.vaporware;
 
-
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
-
+import android.app.FragmentTransaction;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.graphics.Color;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.design.widget.CoordinatorLayout;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.NumberPicker;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
@@ -49,14 +29,17 @@ import java.util.Set;
 
 import teamclouds.com.vaporware.communication.SendData;
 import teamclouds.com.vaporware.communication.UsbService;
+import teamclouds.com.vaporware.parsing.*;
 
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener{
 
-    private TextView selected, actual, resistance, watts;
-    private LineChart mChart;
-    private EditText commands;
+    SettingsFragment settingsFragment;
+    InfoFragment infoFragment;
+    TerminalFragment terminalFragment;
+    private UsbService usbService;
+    private MyHandler mHandler;
 
     /*
      * Notifications from UsbService will be received here.
@@ -83,20 +66,25 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
-    private UsbService usbService;
-    private MyHandler mHandler;
+
     private final ServiceConnection usbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName arg0, IBinder arg1) {
             usbService = ((UsbService.UsbBinder) arg1).getService();
+            Log.v("BIRD", "got usbService");
             usbService.setHandler(mHandler);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
+            Log.v("BIRD", "disconnected");
             usbService = null;
         }
     };
+
+    public UsbService getUsbService() {
+        return usbService;
+    }
 
     private void startService(Class<?> service, ServiceConnection serviceConnection, Bundle extras) {
         if (!UsbService.SERVICE_CONNECTED) {
@@ -151,19 +139,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
-    }
-
-    NumberPicker pidP;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -175,104 +150,6 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         CoordinatorLayout layout = (CoordinatorLayout) findViewById(R.id.app_bar);
-        LinearLayout datalayout = (LinearLayout) layout.findViewById(R.id.content);
-        selected = (TextView) datalayout.findViewById(R.id.selected);
-        actual = (TextView) datalayout.findViewById(R.id.actual);
-        resistance = (TextView) datalayout.findViewById(R.id.resitance);
-        watts = (TextView) datalayout.findViewById(R.id.watts);
-        commands = (EditText) datalayout.findViewById(R.id.commandLine);
-        pidP = (NumberPicker) findViewById(R.id.pidP);
-
-        pidP.setMinValue(0);
-        pidP.setMaxValue(300);
-        pidP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
-            @Override
-            public void onValueChange(NumberPicker numberPicker, int i, int i1) {
-                SendData.setP(usbService, i);
-
-            }
-        });
-
-        Button pidbutton = (Button) datalayout.findViewById(R.id.enablePidDump);
-        pidbutton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                SendData.enableDumpPid(usbService);
-            }
-        });
-
-        Button hidbutton = (Button) datalayout.findViewById(R.id.writeHid);
-        hidbutton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                /*byte[] buffer = { (byte)0xB4 , 0 , 0 };
-                int write = usbService.writeHID(buffer);
-                Toast.makeText(getApplicationContext(), "?:" +write, Toast.LENGTH_SHORT).show(); */
-                SendData.getSettings(usbService);
-
-            }
-        });
-
-
-        commands.setOnEditorActionListener(new EditText.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    SendData.sendData(usbService, v.getText().toString());
-                    return true;
-                }
-                return false;
-            }
-        });
-
-        mChart = (LineChart) findViewById(R.id.chart1);
-
-        // no description text
-        mChart.setDescription("");
-        mChart.setNoDataTextDescription("You need to provide data for the chart.");
-
-        // enable touch gestures
-        mChart.setTouchEnabled(true);
-
-        mChart.setDragDecelerationFrictionCoef(0.9f);
-
-        // enable scaling and dragging
-        mChart.setDragEnabled(true);
-        mChart.setScaleEnabled(true);
-        mChart.setDrawGridBackground(false);
-        mChart.setHighlightPerDragEnabled(true);
-
-        // if disabled, scaling can be done on x- and y-axis separately
-        mChart.setPinchZoom(true);
-
-        // set an alternative background color
-        mChart.setBackgroundColor(Color.LTGRAY);
-
-        //setData(20,40);
-        mChart.setData(new LineData());
-
-        mChart.animateX(2500);
-
-
-        // get the legend (only possible after setting data)
-        Legend l = mChart.getLegend();
-
-        // modify the legend ...
-        l.setForm(Legend.LegendForm.LINE);
-        l.setTextSize(11f);
-        l.setTextColor(Color.WHITE);
-        l.setPosition(Legend.LegendPosition.BELOW_CHART_LEFT);
-
-        XAxis xAxis = mChart.getXAxis();
-        xAxis.setDrawGridLines(false);
-        xAxis.setDrawAxisLine(false);
-        xAxis.setDrawLabels(false);
-
-        YAxis leftAxis = mChart.getAxisLeft();
-        leftAxis.setTextColor(ColorTemplate.getHoloBlue());
-        leftAxis.setDrawGridLines(true);
-        leftAxis.setGranularityEnabled(true);
-
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -283,7 +160,27 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+
+        if (layout.findViewById(R.id.fragment_container) != null) {
+
+            // However, if we're being restored from a previous state,
+            // then we don't need to do anything and should return or else
+            // we could end up with overlapping fragments.
+            if (savedInstanceState != null) {
+                return;
+            }
+            // Create a new Fragment to be placed in the activity layout
+            infoFragment = new InfoFragment();
+
+            // In case this activity was started with special instructions from an
+            // Intent, pass the Intent's extras to the fragment as arguments
+            infoFragment.setArguments(getIntent().getExtras());
+
+            fragmentTransaction.add(R.id.fragment_container , infoFragment).commit();
+        }
     }
+
 
     @Override
     public void onResume() {
@@ -306,7 +203,11 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            if (getFragmentManager().getBackStackEntryCount() != 0) {
+                getFragmentManager().popBackStack();
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
@@ -317,6 +218,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -326,14 +228,23 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            // Create a new Fragment to be placed in the activity layout
+            settingsFragment = new SettingsFragment();
+
+            // In case this activity was started with special instructions from an
+            // Intent, pass the Intent's extras to the fragment as arguments
+            settingsFragment.setArguments(getIntent().getExtras());
+
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            // Add the fragment to the 'fragment_container' FrameLayout
+            transaction.replace(R.id.fragment_container , settingsFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
-
-    HashMap<Long, VapeData> data = new HashMap<>();
-
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -341,8 +252,12 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
+        if (id == R.id.terminal) {
+            terminalFragment = new TerminalFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container , terminalFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
@@ -362,68 +277,30 @@ public class MainActivity extends AppCompatActivity
 
 
     public void onVapeUpdated(String raw) {
-        VapeData vape = VapeData.parseString(raw);
-        if (selected != null && vape != null) {
-            selected.setText(String.valueOf(vape.mSelectedTemp));
-            actual.setText(String.valueOf(vape.mActualTemp));
-            watts.setText(String.valueOf(vape.mWatts));
-            resistance.setText(String.valueOf(vape.mResistance));
-            long time = System.currentTimeMillis();
-            data.put(time, vape);
-            addEntry(time, vape.mActualTemp, vape.mSelectedTemp);
-        } else {
-            SettingsObject.parseString(settings, raw);
-            if (settings != null) {
-                pidP.setValue(settings.pidP);
+        if (terminalFragment != null && terminalFragment.isAdded()) {
+            terminalFragment.onChanged(raw);
+            return;
+        }
+
+        VapeInput data = ParseInput.inputString(raw);
+        if (data == null) {
+            Toast.makeText(this, raw, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (data instanceof PidData) {
+            if (infoFragment != null && infoFragment.isAdded()) {
+               infoFragment.onChanged(data);
             }
-            Toast.makeText(this, "DATA:" + raw,Toast.LENGTH_SHORT).show();
+        } else if (data instanceof Settings) {
+            if (settingsFragment != null && settingsFragment.isAdded()) {
+                settingsFragment.onChanged(data);
+            }
+        } else if (data instanceof AtomizerInfo) {
+            // TODO got atomizer info
         }
     }
 
-    private LineDataSet createSet(int color) {
 
-        LineDataSet set = new LineDataSet(null, "DataSet 1");
-        set.setLineWidth(2.5f);
-        set.setDrawCircles(false);
-        set.setColor(color);
-        set.setAxisDependency(YAxis.AxisDependency.LEFT);
-        set.setDrawValues(false);
 
-        return set;
-    }
-
-    private void addEntry(long time, int temp, int selectedTemp) {
-
-        LineData data = mChart.getData();
-
-        if(data != null) {
-
-            ILineDataSet set = data.getDataSetByIndex(0);
-            ILineDataSet set2 = data.getDataSetByIndex(1);
-
-            if (set == null) {
-                set = createSet(Color.rgb(240, 99, 99));
-                data.addDataSet(set);
-            }
-            if (set2 == null) {
-                set2 = createSet(Color.rgb(0,0,255));
-                data.addDataSet(set2);
-            }
-
-            // add a new x-value first
-            data.addXValue(String.valueOf(time));
-
-            data.addEntry(new Entry(temp, set.getEntryCount()), 0);
-            data.addEntry(new Entry(selectedTemp, set.getEntryCount()), 1);
-
-            mChart.setVisibleXRangeMaximum(5000);
-            // move to the latest entry
-            mChart.moveViewToX(data.getXValCount() - 5001);
-
-            // let the chart know it's data has changed
-            mChart.notifyDataSetChanged();
-
-            mChart.moveViewTo(data.getXValCount()-7, selectedTemp, YAxis.AxisDependency.LEFT);
-        }
-    }
 }
