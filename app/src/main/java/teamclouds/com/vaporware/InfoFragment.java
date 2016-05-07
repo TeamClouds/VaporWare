@@ -77,7 +77,7 @@ public class InfoFragment extends Fragment {
             public void onClick(View view) {
                 MainActivity mainActivity = (MainActivity)getActivity();
                 UsbService usbService = mainActivity.getUsbService();
-                usbService.writeHID(null);
+                usbService.hidReset();
             }
         });
 

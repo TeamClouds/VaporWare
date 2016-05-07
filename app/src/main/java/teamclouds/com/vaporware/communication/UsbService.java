@@ -15,6 +15,8 @@ import android.hardware.usb.UsbManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.felhr.usbserial.CDCSerialDevice;
 import com.felhr.usbserial.UsbSerialDevice;
@@ -24,7 +26,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import teamclouds.com.vaporware.hid.HidUtils;
+
 public class UsbService extends Service {
+
+    private static final String TAG = "UsbService";
 
     public static final String ACTION_USB_READY = "com.felhr.connectivityservices.USB_READY";
     public static final String ACTION_USB_ATTACHED = "android.hardware.usb.action.USB_DEVICE_ATTACHED";
@@ -106,8 +112,10 @@ public class UsbService extends Service {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_GRANTED);
                     arg0.sendBroadcast(intent);
                     connection = usbManager.openDevice(device);
-                    serialPortConnected = true;
-                    new ConnectionThread().run();
+                    if (device.getDeviceClass() != UsbConstants.USB_CLASS_HID) {
+                        serialPortConnected = true;
+                        new ConnectionThread().run();
+                    }
                 } else // User not accepted our USB connection. Send an Intent to the Main Activity
                 {
                     Intent intent = new Intent(ACTION_USB_PERMISSION_NOT_GRANTED);
@@ -121,7 +129,9 @@ public class UsbService extends Service {
                 Intent intent = new Intent(ACTION_USB_DISCONNECTED);
                 arg0.sendBroadcast(intent);
                 serialPortConnected = false;
-                serialPort.close();
+                if (serialPort != null) {
+                    serialPort.close();
+                }
             }
         }
     };
@@ -200,6 +210,28 @@ public class UsbService extends Service {
         return connection.bulkTransfer(writeEp, data, data.length, 0);
     }
 
+    public void hidReset() {
+        UsbInterface writeIntf = device.getInterface(0);
+        final UsbEndpoint writeEp = writeIntf.getEndpoint(1);
+
+        // Lock the usb interface.
+        boolean claimed = connection.claimInterface(writeIntf, true);
+
+        if (!claimed) {
+            //Toast.makeText(this, "couldn't claim interface", Toast.LENGTH_SHORT).show();
+            connection.releaseInterface(writeIntf);
+            return;
+        }
+        final byte[] reset = HidUtils.generateCmd((byte) 0xB4, 0, 0);
+        int result = connection.bulkTransfer(writeEp, reset, reset.length, 1000);
+
+        connection.releaseInterface(writeIntf);
+
+        //Toast.makeText(this, "result: " + result, Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "reset result: " + result);
+
+    }
+
     public void setHandler(Handler mHandler) {
         this.mHandler = mHandler;
     }
@@ -267,6 +299,9 @@ public class UsbService extends Service {
     private class ConnectionThread extends Thread {
         @Override
         public void run() {
+            if (!serialPortConnected) {
+                return;
+            }
             serialPort = UsbSerialDevice.createUsbSerialDevice(device, connection);
             if (serialPort != null) {
                 if (serialPort.open()) {
