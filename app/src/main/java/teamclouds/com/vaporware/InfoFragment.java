@@ -71,6 +71,16 @@ public class InfoFragment extends Fragment {
             }
         });
 
+        Button hidbutton = (Button) datalayout.findViewById(R.id.writeHid);
+        hidbutton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                MainActivity mainActivity = (MainActivity)getActivity();
+                UsbService usbService = mainActivity.getUsbService();
+                usbService.writeHID(null);
+            }
+        });
+
         mChart = (LineChart) datalayout.findViewById(R.id.chart1);
 
         // no description text
