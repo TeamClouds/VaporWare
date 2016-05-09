@@ -2,9 +2,6 @@ package teamclouds.com.vaporware;
 
 import org.junit.Test;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 import teamclouds.com.vaporware.hid.HidUtils;
 
 import static org.junit.Assert.*;
@@ -21,11 +18,12 @@ public class HidUtilsTests {
         assertEquals("350e00000000000800004849444363010000", strbytes);
     }
 
-    public static String bytesToHex(byte[] in) {
+    private static String bytesToHex(byte[] in) {
         final StringBuilder builder = new StringBuilder();
-        for(byte b : in) {
+        for (byte b : in) {
             builder.append(String.format("%02x", b));
         }
         return builder.toString();
     }
+
 }

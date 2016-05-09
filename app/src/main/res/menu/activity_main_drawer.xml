@@ -7,9 +7,9 @@
                 android:icon="@drawable/ic_menu_camera"
                 android:title="Terminal"/>
         <item
-                android:id="@+id/nav_gallery"
+                android:id="@+id/hid_commands"
                 android:icon="@drawable/ic_menu_gallery"
-                android:title="Gallery"/>
+                android:title="HID Commander"/>
         <item
                 android:id="@+id/nav_slideshow"
                 android:icon="@drawable/ic_menu_slideshow"

@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "teamclouds.com.vaporware"
-        minSdkVersion 12
+        minSdkVersion 17
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -29,4 +29,6 @@ dependencies {
     compile 'com.android.support:design:23.3.0'
     compile 'com.github.felHR85:UsbSerial:4.2'
     compile 'com.github.PhilJay:MPAndroidChart:v2.2.4'
+    compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.android.support:recyclerview-v7:23.3.0'
 }

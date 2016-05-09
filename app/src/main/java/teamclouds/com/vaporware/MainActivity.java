@@ -258,8 +258,12 @@ public class MainActivity extends AppCompatActivity
             transaction.replace(R.id.fragment_container , terminalFragment);
             transaction.addToBackStack(null);
             transaction.commit();
-        } else if (id == R.id.nav_gallery) {
-
+        } else if (id == R.id.hid_commands) {
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            final HIDCommandsFragment hidCommandsFragment = new HIDCommandsFragment();
+            transaction.replace(R.id.fragment_container , hidCommandsFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {

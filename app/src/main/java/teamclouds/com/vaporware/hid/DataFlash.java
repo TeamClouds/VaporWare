@@ -1,29 +1,57 @@
 package teamclouds.com.vaporware.hid;
 
+import android.util.Log;
+
+import java.io.DataInputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * Created by roman on 5/7/16.
  */
 public class DataFlash {
 
-    int mHwVersion;
-    int mBootFlag;
+    private static final String TAG = "DataFlash";
+
+    Integer mHwVersion;
+    byte mBootFlag;
     String mProductId;
-    int mFirmwareVersion;
-    int mUnknown1, mUnknown2;
+    Integer mFirmwareVersion;
+    Integer mLdRomVersion;
 
     public DataFlash(ByteBuffer buffer) {
+        buffer.order(ByteOrder.nativeOrder());
+        if (buffer.remaining() != 2044) {
+            throw new UnsupportedOperationException("data flash must be 2044 bytes");
+        }
+
         mHwVersion = buffer.getInt(4);
         mBootFlag = buffer.get(9);
 
-        byte[] strBuff = new byte[4];
-        buffer.get(strBuff, 312, 4);
-        mProductId = new String(strBuff);
+        StringBuilder productId = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            productId.append((char) buffer.get(312 + i));
+        }
+        mProductId = productId.toString();
 
         mFirmwareVersion = buffer.getInt(256);
-        mUnknown1 = buffer.getInt(260);
-        mUnknown2 = buffer.getInt(264);
+        mLdRomVersion = buffer.getInt(260);
+    }
+
+    public boolean verifyChecksum(int checksum, byte[] raw) {
+        final int localChecksum = HidUtils.checkSum(raw);
+        return localChecksum == checksum;
+    }
+
+    @Override
+    public String toString() {
+        return "DataFlash[ "
+                + " mHwVersion: " + mHwVersion
+                + ", mBootFlag: " + mBootFlag
+                + ", mProductId: " + mProductId
+                + ", mFirmwareVersion: " + mFirmwareVersion
+                + ", mLdRomVersion: " + mLdRomVersion
+                + " ]";
     }
 
 }

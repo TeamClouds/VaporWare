@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import teamclouds.com.vaporware.hid.DataFlash;
 import teamclouds.com.vaporware.hid.HidUtils;
 
 public class UsbService extends Service {
@@ -83,7 +84,7 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbCTSCallback ctsCallback = new UsbSerialInterface.UsbCTSCallback() {
         @Override
         public void onCTSChanged(boolean state) {
-            if(mHandler != null)
+            if (mHandler != null)
                 mHandler.obtainMessage(CTS_CHANGE).sendToTarget();
         }
     };
@@ -94,7 +95,7 @@ public class UsbService extends Service {
     private UsbSerialInterface.UsbDSRCallback dsrCallback = new UsbSerialInterface.UsbDSRCallback() {
         @Override
         public void onDSRChanged(boolean state) {
-            if(mHandler != null)
+            if (mHandler != null)
                 mHandler.obtainMessage(DSR_CHANGE).sendToTarget();
         }
     };
@@ -179,57 +180,41 @@ public class UsbService extends Service {
     }
 
 
-    public int writeHID(byte[] data) {
-        UsbInterface writeIntf = device.getInterface(0);
-        UsbEndpoint writeEp = writeIntf.getEndpoint(1);
-        UsbDeviceConnection writeConnection = usbManager.openDevice(device);
-
-        // Lock the usb interface.
-        boolean claimed = writeConnection.claimInterface(writeIntf, true);
-
-        if (!claimed) {
-            return 0;
-        }
-
-        // Write the data as a bulk transfer with defined data length.
-        connection.controlTransfer(0x40, 0, 0, 0, null, 0, 0);// reset
-        // mConnection.controlTransfer(0×40,
-        // 0, 1, 0, null, 0,
-        // 0);//clear Rx
-        connection.controlTransfer(0x40, 0, 2, 0, null, 0, 0);// clear Tx
-        connection.controlTransfer(0x40, 0x02, 0x0000, 0, null, 0, 0);// flow
-        // control
-        // none
-        connection.controlTransfer(0x40, 0x03, 0x0034, 0, null, 0, 0);// baudrate
-        // 57600
-        connection.controlTransfer(0x40, 0x04, 0x0008, 0, null, 0, 0);// data bit
-        // 8, parity
-        // none,
-        // stop bit
-        // 1, tx off
-        return connection.bulkTransfer(writeEp, data, data.length, 0);
+    public int writeApRom(byte[] data) {
+        Log.d(TAG, "writing AP ROM with size: " + data.length);
+        final UsbInterface usbInterface = initializeCommand();
+        final int result = HidUtils.writeApRom(connection, usbInterface, data);
+        connection.releaseInterface(usbInterface);
+        connection.close();
+        return result;
     }
 
-    public void hidReset() {
-        UsbInterface writeIntf = device.getInterface(0);
-        final UsbEndpoint writeEp = writeIntf.getEndpoint(1);
+    private UsbInterface initializeCommand() {
+        UsbInterface usbInterface = device.getInterface(0);
 
         // Lock the usb interface.
-        boolean claimed = connection.claimInterface(writeIntf, true);
+        boolean claimed = connection.claimInterface(usbInterface, true);
 
         if (!claimed) {
             //Toast.makeText(this, "couldn't claim interface", Toast.LENGTH_SHORT).show();
-            connection.releaseInterface(writeIntf);
-            return;
+            connection.releaseInterface(usbInterface);
+            throw new IllegalStateException("error claiming device");
         }
-        final byte[] reset = HidUtils.generateCmd((byte) 0xB4, 0, 0);
-        int result = connection.bulkTransfer(writeEp, reset, reset.length, 1000);
+        return usbInterface;
+    }
 
-        connection.releaseInterface(writeIntf);
-
-        //Toast.makeText(this, "result: " + result, Toast.LENGTH_SHORT).show();
+    public void hidReset() {
+        final UsbInterface usbInterface = initializeCommand();
+        final int result = HidUtils.reset(connection, usbInterface.getEndpoint(1 /* write */));
+        connection.releaseInterface(usbInterface);
         Log.d(TAG, "reset result: " + result);
+    }
 
+    public DataFlash hidRead() {
+        final UsbInterface usbInterface = initializeCommand();
+        DataFlash dataFlash = HidUtils.readDataFlash(connection, usbInterface);
+        connection.releaseInterface(usbInterface);
+        return dataFlash;
     }
 
     public void setHandler(Handler mHandler) {
