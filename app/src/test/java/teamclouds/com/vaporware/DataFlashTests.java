@@ -35,11 +35,9 @@ public class DataFlashTests {
         wrap.order(ByteOrder.nativeOrder());
         Integer checksum = HidUtils.checkSum(wrap);
 
-
         DataFlash dataFlash = new DataFlash(wrap);
         System.out.println("data flash: " + dataFlash);
 
         Assert.assertTrue(dataFlash.verifyChecksum(checksum, rawDataFlash));
-
     }
 }

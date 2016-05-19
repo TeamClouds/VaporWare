@@ -1,14 +1,8 @@
 package teamclouds.com.vaporware.hid;
 
-import android.util.Log;
-
-import java.io.DataInputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-/**
- * Created by roman on 5/7/16.
- */
 public class DataFlash {
 
     private static final String TAG = "DataFlash";

@@ -4,11 +4,17 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.util.Log;
+import android.util.Pair;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HidUtils {
 
@@ -23,6 +29,42 @@ public class HidUtils {
 
     private static final int END_POINT_READ = 0;
     private static final int END_POINT_WRITE = 1;
+
+    /**
+     * Mapping of product IDs to their names
+     */
+    public static Map<String, String> PRODUCT_NAMES;
+
+    /**
+     * Mapping of product IDs to a list of product ids with compatible firmware
+     */
+    public static Map<String, List<String>> SUPPORTED_PRODUCT_IDS;
+
+    static {
+        PRODUCT_NAMES = new LinkedHashMap<>();
+        PRODUCT_NAMES.put("E052", "eVic-VTC Mini");
+        PRODUCT_NAMES.put("E056", "CUBOID MINI");
+        PRODUCT_NAMES.put("E060", "Cuboid");
+        PRODUCT_NAMES.put("M011", "iStick TC100W");
+        PRODUCT_NAMES.put("M041", "iStick Pico");
+        PRODUCT_NAMES.put("W007", "Presa TC75W");
+        PRODUCT_NAMES.put("W010", "Classic");
+        PRODUCT_NAMES.put("W011", "Lite");
+        PRODUCT_NAMES.put("W013", "Stout");
+        PRODUCT_NAMES.put("W014", "Reuleaux RX200");
+
+        SUPPORTED_PRODUCT_IDS = new LinkedHashMap<>();
+        SUPPORTED_PRODUCT_IDS.put("E052", Arrays.asList("E052", "W007"));
+        SUPPORTED_PRODUCT_IDS.put("E056", Arrays.asList("E056"));
+        SUPPORTED_PRODUCT_IDS.put("E060", Arrays.asList("E060"));
+        SUPPORTED_PRODUCT_IDS.put("M011", Arrays.asList("M011"));
+        SUPPORTED_PRODUCT_IDS.put("M041", Arrays.asList("M041"));
+        SUPPORTED_PRODUCT_IDS.put("W007", Arrays.asList("W007", "E052"));
+        SUPPORTED_PRODUCT_IDS.put("W010", Arrays.asList("W010"));
+        SUPPORTED_PRODUCT_IDS.put("W011", Arrays.asList("W011"));
+        SUPPORTED_PRODUCT_IDS.put("W013", Arrays.asList("W013"));
+        SUPPORTED_PRODUCT_IDS.put("W014", Arrays.asList("W014"));
+    }
 
 
     /**
