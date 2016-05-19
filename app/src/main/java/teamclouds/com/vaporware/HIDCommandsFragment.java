@@ -35,16 +35,6 @@ public class HIDCommandsFragment extends Fragment implements View.OnClickListene
                     Log.d(TAG, "read dataflash: " + dataFlash);
                 }
             }),
-            new Command("Write Stock ROM v3.03", View.generateViewId(), new Runnable() {
-                @Override
-                public void run() {
-                    final ApRom rom = getApRom(R.raw.evic_vtc_mini_v3_03);
-                    if (rom != null) {
-                        rom.convert();
-                        mUsbService.writeApRom(rom.getData());
-                    }
-                }
-            }),
             new Command("Write VaporWare ROM", View.generateViewId(), new Runnable() {
                 @Override
                 public void run() {
